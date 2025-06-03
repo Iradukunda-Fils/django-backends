@@ -12,7 +12,12 @@ A Django-based web application with custom user authentication, profile manageme
 - AJAX-powered login with real-time feedback
 - User dashboard (only visible to authenticated users)
 - Django admin integration for user management
-- Responsive and modern UI with custom CSS
+- Responsive and modern UI with custom CSSfrom .views import logout_view
+
+urlpatterns = [
+    # ... other urls ...
+    path('logout/', logout_view, name='logout'),
+]
 
 ## Requirements
 
