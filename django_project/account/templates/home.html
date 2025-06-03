@@ -1,0 +1,25 @@
+{# filepath: /home/iradukunda/Ghost/Learn/Projects/study/django_project/account/templates/dashboard.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% if user.is_authenticated %}
+        <h2>Welcome, {{ user.username }}!</h2>
+        <p>Email: {{ user.email }}</p>
+        <p>Bio: {{ user.bio|default:"No bio provided." }}</p>
+        <p>Date of Birth: {{ user.date_of_birth|date:"Y-m-d"|default:"Not set" }}</p>
+        <p>Phone Number: {{ user.phone_number|default:"Not set" }}</p>
+        <p>Location: {{ user.location|default:"Not set" }}</p>
+        {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" style="max-width:150px; border-radius:8px;">
+        {% else %}
+            <p>No profile picture uploaded.</p>
+        {% endif %}
+        <hr>
+        <p><a href="{% url 'login:logout' %}">Logout</a></p>
+    {% else %}
+        <h2>Dashboard</h2>
+        <p>You must be <a href="">logged in</a> to view your dashboard information.</p>
+    {% endif %}
+</div>
+{% endblock %}

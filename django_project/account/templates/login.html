@@ -1,0 +1,176 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 60px auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.8rem;
+            background: #0984e3;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: #b2bec3;
+        }
+
+        .message {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .success {
+            background: #dff9fb;
+            color: #22a06b;
+            border: 1px solid #22a06b;
+        }
+
+        .error {
+            background: #fbeee6;
+            color: #d63031;
+            border: 1px solid #d63031;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <h2>Login</h2>
+    <form id="login-form" autocomplete="off">
+        <div class="form-group">
+            <label for="id_username">Username or Email</label>
+            <input type="text" id="id_username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="id_password">Password</label>
+            <input type="password" id="id_password" name="password" required>
+        </div>
+        <button type="submit" id="login-btn" data-default-text="Login">Login</button>
+    </form>
+    <div id="message" class="message"></div>
+</div>
+
+<script>
+    // Fetch CSRF token from meta tag
+    function getCSRFToken() {
+        const token = document.querySelector('meta[name="csrf-token"]');
+        return token ? token.getAttribute('content') : '';
+    }
+
+    // Display message
+    function showMessage(msg, type = "error") {
+        const messageDiv = document.getElementById('message');
+        messageDiv.textContent = msg;
+        messageDiv.className = 'message ' + type;
+        messageDiv.style.display = 'block';
+    }
+
+    // Hide message
+    function hideMessage() {
+        const messageDiv = document.getElementById('message');
+        messageDiv.style.display = 'none';
+    }
+
+    // Reset button to original state
+    function resetButton(button) {
+        button.disabled = false;
+        button.textContent = button.getAttribute('data-default-text');
+    }
+
+    // Submit login form
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideMessage();
+
+        const btn = document.getElementById('login-btn');
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+
+        const formData = new FormData(this);
+        const payload = new URLSearchParams(formData);
+
+        try {
+            const response = await fetch("{% url 'login:login' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCSRFToken(),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: payload,
+            });
+
+            const data = await parseResponse(response);
+
+            if (response.ok) {
+                if (data?.success) {
+                    showMessage("Login successful! Redirecting..." + data?.success , "success");
+                    setTimeout(() => {
+                        window.location.href = "{% url 'login:home' %}";
+                    }, 1200); 
+                } else {
+                    showMessage("Login failed: " + (data?.error || "Invalid credentials."), "error");
+                }
+            } else if (response.status === 403) {
+                showMessage("Access forbidden. Please check your credentials or CSRF token.", "error");
+            } else {
+                showMessage("Login failed: " + (data?.error || "Unknown error"), "error");
+            }
+        } catch (err) {
+            showMessage("An unexpected error occurred: " + err.message, "error");
+        } finally {
+            resetButton(btn);
+        }
+    });
+
+    async function parseResponse(response) {
+        try {
+            return await response.json();
+        } catch {
+            return { error: await response.text() };
+        }
+    }
+</script>
+</body>
+</html>
